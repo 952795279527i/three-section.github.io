@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+    <style>
+      table {
+        width: 100%;
+      }
+      tr th {
+        background-color: #ccc;
+      }
+      tr td,
+      tr th {
+        text-align: center;
+        height: 35px;
+      }
+      tr th:nth-child(6),
+      tr th:nth-child(7),
+      tr th:nth-child(8) {
+        width: 200px;
+      }
+      #del {
+        background-color: red;
+        border: 1px solid rgb(227, 120, 120);
+        color: white;
+        border-radius: 4px;
+      }
+      #addBtn,
+      #updBtn {
+        width: 80px;
+        height: 30px;
+        border: 1px solid black;
+        border-radius: 6px;
+      }
+      #addBtn {
+        background-color: green;
+      }
+      #updBtn {
+        background-color: red;
+      }
+      form {
+        border: 1px solid black;
+        width: 300px;
+        padding-left: 15px;
+      }
+      #addBtnList,
+      #delBtnList {
+        width: 80px;
+        height: 28px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #ed5126;
+        margin: 5px 0;
+        color: white;
+      }
+      form {
+        display: none;
+      }
+      #formFun {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-image: linear-gradient(0deg, #c1dfc4 0%, #deecdd 100%);
+      }
+      tbody tr:hover {
+        background-color: rgba(233, 215, 223, 0.4);
+        cursor: pointer;
+      }
+      button {
+        cursor: pointer;
+      }
+      #h2Title {
+        text-align: center;
+      }
+      .delboy,
+      .update,
+      .inquire {
+        display: inline-block;
+        padding: 10px 20px;
+        margin: 10px 0;
+        font-size: 20px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        outline: none; /*使绘制于元素周围的一条线无效。*/
+        color: #fff;
+        background-color: #4caf50;
+        border: none;
+        border-radius: 15px; /*设置圆角边框*/
+        box-shadow: 0 9px #999;
+      }
+      .delboy:hover,
+      .update:hover,
+      .inquire:hover {
+        background-color: #3e8e41;
+      }
+      .delboy:active,
+      .update:active,
+      .inquire:active {
+        background-color: #3e8e41;
+        box-shadow: 0 5px #666; /*设置阴影效果*/
+        transform: translateY(4px); /*设置平移效果*/
+      }
+    </style>
+  </head>
+  <body>
+    <button id="addBtnList">添加</button>
+    <button id="delBtnList">取消</button>
+    <form action="#" id="formFun">
+      <h2 id="h2Title"></h2>
+      茶叶名称：<input type="text" name="name" /><br /><br />
+      茶叶类型：<input type="text" name="type" /><br /><br />
+      茶叶价格：<input type="text" name="price" /><br /><br />
+      茶叶库存：<input type="number" name="stock" /><br /><br />
+      茶叶描述：<textarea name="description" cols="22"></textarea><br />
+      <button id="addBtn">添加茶叶</button>
+      <button id="updBtn">取消添加</button>
+    </form>
+    <table border="1" style="border-collapse: collapse">
+      <thead>
+        <tr>
+          <th id="id">ID</th>
+          <th id="name">名称</th>
+          <th id="type">类型</th>
+          <th id="price">价格</th>
+          <th id="stock">库存</th>
+          <th id="description">描述</th>
+          <th id="created_at">创建时间</th>
+          <th id="updated_at">更新时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      let http = new XMLHttpRequest();
+      let idx;
+      let updData = {};
+      let shangpin = {};
+      let updIndex = 0;
+      const addBtn = document.getElementById("addBtn");
+      const tbodyObj = document.querySelector("tbody");
+      const bos = document.getElementById("bos");
+      const form = document.getElementById("formFun");
+      const addBtnList = document.getElementById("addBtnList");
+      const delBtnList = document.getElementById("delBtnList");
+      saveType = 0;
+      (function () {
+        //showList()
+        getList();
+        //   addBtn.addEventListener('click',addBtnObj)
+        tbodyObj.addEventListener("click", tbodyList);
+        form.addEventListener("submit", save);
+        addBtnList.addEventListener("click", addBtnObj);
+        delBtnList.addEventListener("click", delBtnobj);
+      })();
+      //   function showList() {
+      //      //getAjxalist()
+      //   }
+      function addBtnObj() {
+        h2Title.innerHTML = "添加茶叶";
+        form.style.display = "block";
+        saveType = 0;
+      }
+      function delBtnobj() {
+        form.style.display = "none";
+      }
+      function save() {
+        if (saveType == 0) {
+          add(); //添加
+        }
+        if (saveType == 1) {
+          upd(); //修改
+        }
+        if (saveType == 2) {
+          Examine(); //查看
+        }
+      }
+
+      function tbodyList() {
+        event.preventDefault();
+
+        if (event.target.nodeName == "BUTTON") {
+          if (event.target.innerHTML == "删除") {
+            if (confirm("确定要删吗")) {
+              let id = event.target.dataset.id;
+              //console.log(id);
+              http.open("DELETE", "https://liu.zzgoodqc.cn/teas/" + id);
+              http.send();
+              http.responseType = "json";
+              http.onload = function () {
+                getList();
+              };
+            }
+          }
+          if (event.target.innerHTML == "修改") {
+            idx = event.target.dataset.id;
+            updIndex = event.target.dataset.index; //自定义下标
+
+            h2Title.innerHTML = "更新茶叶";
+            addBtn.innerHTML = "更新茶叶";
+            updBtn.innerHTML = "取消更新";
+            form.style.display = "block";
+            saveType = 1;
+
+            let shangpin = updData.data[updIndex];
+            form.name.value = shangpin.name; //修改的名字
+            form.type.value = shangpin.type; //修改的类型
+            form.price.value = shangpin.price; //修改的价格
+            form.stock.value = shangpin.stock; //修改的库存
+            form.description.value = shangpin.description; //修改的描述
+          }
+          if (event.target.innerHTML == "查看") {
+            idx = event.target.dataset.id;
+            console.log(idx);
+            h2Title.innerHTML = "详细茶叶";
+            addBtn.innerHTML = "确认无误";
+            updBtn.innerHTML = "取消查看";
+            form.style.display = "block";
+            saveType = 2;
+            let shangpin = updData.data[updIndex];
+            form.name.value = shangpin.name; //修改的名字
+            form.type.value = shangpin.type; //修改的类型
+            form.price.value = shangpin.price; //修改的价格
+            form.stock.value = shangpin.stock; //修改的库存
+            form.description.value = shangpin.description; //修改的描述
+          }
+        }
+      }
+      function Examine() {
+        event.preventDefault();
+        console.log(1111);
+        console.log(idx);
+
+        fetch(`https://liu.zzgoodqc.cn/teas/${idx}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            console.log(data);
+            getList();
+          });
+
+        form.style.display = "none";
+      }
+      //修改
+      function upd() {
+        event.preventDefault();
+        console.log(form.name.value);
+        console.log(1111);
+        console.log(idx);
+        fetch(`https://liu.zzgoodqc.cn/teas/${idx}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: `${form.name.value}`,
+            type: `${form.type.value}`,
+            price: `${form.price.value}`,
+            stock: `${form.stock.value}`,
+            description: `${form.description.value}`,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            console.log(data);
+            getList();
+          });
+
+        form.style.display = "none";
+      }
+
+      //       data = JSON.stringify(Object.fromEntries(Array.from(data.entries())));
+
+      //       http.open("PUT", "https://liu.zzgoodqc.cn/teas/" + upid); //此id在tbody点击 修改按钮 的时候传递过来
+      //       http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      //       http.send(data);
+
+      //       http.responseType = "json";
+
+      //添加
+      function add() {
+        event.preventDefault();
+        let data = new FormData(formFun);
+        http.open("POST", "https://liu.zzgoodqc.cn/teas");
+        http.send(data);
+        console.log(http);
+        http.responseType = "json";
+        console.log(http);
+        http.onload = function () {
+          getList();
+          form.reset();
+        };
+        form.style.display = "none";
+      }
+
+      function getList() {
+        http.open("GET", "https://liu.zzgoodqc.cn/teas");
+        http.send();
+        http.responseType = "json";
+        http.onload = function () {
+          ObviousList(http.response);
+        };
+      }
+      function ObviousList(data) {
+        let html = "";
+        data.data.forEach((item, index) => {
+          html += `
+                      <tr>
+                          <td id="id">${item.id}</td>
+                          <td id="name">${item.name}</td>
+                          <td id="type">${item.type}</td>
+                          <td id="price">${item.price}</td>
+                          <td id="stock">${item.stock}</td>
+                          <td id="description">${item.description}</td>
+                          <td id="created_at">${getdate(item.created_at)}</td>
+                          <td id="updated_at">${getdate(item.updated_at)}</td>
+                          <td>
+                              <button data-id=${
+                                item.id
+                              } class="delboy">删除</button>
+                              <button data-index=${index} data-id=${
+            item.id
+          } class="update">修改</button>
+                              <button data-id=${
+                                item.id
+                              } class="inquire">查看</button>
+                          </td>
+                      </tr>
+                              `;
+        });
+        tbodyObj.innerHTML = html;
+        updData = data;
+        function getdate(date) {
+          let date1 = new Date(date);
+          let year = date1.getFullYear();
+          let month = date1.getMonth();
+          let day = date1.getDate();
+          let hour = date1.getHours();
+          let minute = date1.getMinutes();
+          let second = date1.getSeconds();
+          return `${year} ${month}.${day} ${hour}:${minute}:${second}`;
+        }
+      }
+    </script>
+  </body>
+</html>
