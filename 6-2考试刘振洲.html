@@ -217,26 +217,28 @@
           }
           if (event.target.innerHTML == "查看") {
             idx = event.target.dataset.id;
-            console.log(idx);
             h2Title.innerHTML = "详细茶叶";
             addBtn.innerHTML = "确认无误";
             updBtn.innerHTML = "取消查看";
             form.style.display = "block";
             saveType = 2;
-            let shangpin = updData.data[updIndex];
-            form.name.value = shangpin.name; //修改的名字
-            form.type.value = shangpin.type; //修改的类型
-            form.price.value = shangpin.price; //修改的价格
-            form.stock.value = shangpin.stock; //修改的库存
-            form.description.value = shangpin.description; //修改的描述
+            let shangpin = updData.data;
+            shangpin.filter((item, index) => {
+              if (item.id == idx) {
+                console.log(item);
+                form.name.value = item.name; //修改的名字
+                form.type.value = item.type; //修改的类型
+                form.price.value = item.price; //修改的价格
+                form.stock.value = item.stock; //修改的库存
+                form.description.value = item.description; //修改的描述
+              }
+              return item.idx;
+            });
           }
         }
       }
       function Examine() {
         event.preventDefault();
-        console.log(1111);
-        console.log(idx);
-
         fetch(`https://liu.zzgoodqc.cn/teas/${idx}`, {
           method: "GET",
           headers: {
@@ -247,6 +249,7 @@
           .then((data) => {
             console.log(data);
             getList();
+            form.reset();
           });
 
         form.style.display = "none";
@@ -274,6 +277,7 @@
           .then((data) => {
             console.log(data);
             getList();
+            form.reset();
           });
 
         form.style.display = "none";
