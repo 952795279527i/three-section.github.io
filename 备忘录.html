@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      .compulted {
+        text-decoration: line-through;
+        color: #ccc;
+      }
+      #inp {
+        width: 240px;
+        height: 35px;
+        float: left;
+        font-size: 22px;
+        padding-left: 5px;
+        outline: none;
+        margin-top: 10px;
+      }
+      ul {
+        margin-top: 10px;
+      }
+      #all {
+        width: 40px;
+        height: 39px;
+        float: left;
+        margin-top: 10px;
+      }
+      #div {
+        float: left;
+      }
+      #box {
+        width: 400px;
+        min-height: 450px;
+        background-color: rgba(204, 204, 204, 0.4);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      h1 {
+        font-weight: normal;
+        font-size: 44px;
+        text-align: center;
+        color: rgba(162, 91, 88);
+      }
+      #bos {
+        width: 300px;
+        margin: 10px 60px;
+        min-height: 300px;
+        background-color: #fff;
+      }
+      a {
+        font-size: 14px;
+        text-decoration: none;
+        color: #000;
+        margin: 3px;
+      }
+      li {
+        list-style: none;
+      }
+      ul li {
+        width: 300px;
+        float: left;
+        margin: 10px 0;
+      }
+      #result {
+        position: absolute;
+        bottom: 10px;
+      }
+      a:active {
+        background-color: rgba(204, 204, 204, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box">
+      <h1>备忘录</h1>
+      <div id="bos">
+        <input type="checkbox" name="" id="all" />
+        <input type="text" name="" id="inp" placeholder="需要做什么？" />
+        <div id="div">
+          <ul></ul>
+        </div>
+        <div id="result">
+          <a href="#"><span id="num">0</span>个未完成</a>
+          <a href="#" id="searchAll">所有</a>
+          <a href="#" id="searchactive">未完成</a>
+          <a href="#" id="completed">已完成</a>
+          <a href="#" id="clearcompleted">清除已完成</a>
+        </div>
+      </div>
+    </div>
+    <script src="./jquery/code.jquery.com_jquery-3.7.0.js"></script>
+    <script>
+      let todolist = null;
+      // const inp = document.getElementById("inp");
+      const ul = document.querySelector("ul");
+      // const all = document.getElementById("all");
+      // const searchAll = document.getElementById("searchAll");
+      // const searchactive = document.getElementById("searchactive");
+      // const completed = document.getElementById("completed");
+      // const clearcompleted = document.getElementById("clearcompleted");
+      const num = document.getElementById("num");
+      (function () {
+        todolist = getLocalData("todolist");
+        showList();
+        $("#inp").on("keydown", addTodo);
+        $("#all").on("click", allFun);
+        $("ul").on("click", checkStatus);
+        $("#searchAll").on("click", searchAllFun);
+        $("#searchactive").on("click", searchactiveFun);
+        $("#completed").on("click", completedFun);
+        $("#clearcompleted").on("click", clearcompleteddFun);
+      })();
+
+      //筛选
+      function clearcompleteddFun() {
+        todolist = todolist.filter((item) => {
+          return item.status == false;
+        });
+        localStorage.setItem("todolist", JSON.stringify(todolist));
+        todolist = getLocalData("todolist");
+        showList(todolist);
+      }
+      function completedFun() {
+        let tmp = todolist.filter((item) => {
+          return item.status == true;
+        });
+        showList(tmp);
+      }
+      function searchAllFun() {
+        showList();
+      }
+      function searchactiveFun() {
+        let tmp = todolist.filter((item) => {
+          return item.status == false;
+        });
+        showList(tmp);
+      }
+      //全选
+      function allFun() {
+        console.log(this.checked);
+        todolist = todolist.map((item) => {
+          return {
+            ...item,
+            status: this.checked,
+          };
+        });
+        localStorage.setItem("todolist", JSON.stringify(todolist));
+        showList();
+      }
+      //点击复选框改变状态
+      function checkStatus() {
+        //console.log(event.target.dataset.id);
+        //找到id
+        if (event.target.nodeName == "INPUT") {
+          let id = event.target.dataset.id;
+          let index = todolist.findIndex((item) => {
+            event.preventDefault();
+            //当前循环的id与如果与点击的id相等就传过去 返回下标
+            return item.id == event.target.dataset.id;
+          });
+          console.log(index);
+          //让他反向 是true反false  是false反true
+          todolist[index].status = !todolist[index].status;
+          localStorage.setItem("todolist", JSON.stringify(todolist));
+        }
+        if (event.target.nodeName == "A" && event.target.innerHTML == "X") {
+          let index = todolist.findIndex((item) => {
+            event.preventDefault();
+            //当前循环的id与如果与点击的id相等就传过去 返回下标
+            return item.id == event.target.dataset.id;
+          });
+          todolist.splice(index, 1);
+          console.log(todolist);
+          localStorage.setItem("todolist", JSON.stringify(todolist));
+        }
+        showList();
+      }
+      //添加一个
+      function addTodo() {
+        if (event.keyCode == 13) {
+          //回车
+          console.log(this.value);
+          let data = {
+            con: this.value,
+            status: false,
+            id: new Date().getTime() + getRandomNm(),
+          };
+          if (this.value) {
+            todolist.push(data);
+          }
+
+          localStorage.setItem("todolist", JSON.stringify(todolist));
+          showList();
+          this.value = "";
+        }
+
+        //setLocalDataa('todolist',todolist)
+      }
+      //4位随机数
+      function getRandomNm() {
+        return Math.floor(Math.random() * 10000);
+      }
+      //显示列表
+      function showList(dataobj = todolist) {
+        if (dataobj.length === 0) {
+          ul.innerHTML = "";
+          return;
+        }
+        let html = "";
+        dataobj.forEach((item, index) => {
+          html += `
+            <li data-id="${item.id}">
+              <input data-id="${item.id}" type="checkbox" style=" width: 37px;
+        height: 39px;  float: left;" ${item.status ? "checked" : ""}>
+              <span class="${
+                item.status ? "compulted" : ""
+              }" style="font-size:30px;  float: left;;display:block">${
+            item.con
+          }</span>
+              <a href="#" data-id="${
+                item.id
+              }" style="float:right; font-size:28px">X</a>
+              </li>
+            `;
+        });
+        ul.innerHTML = html;
+        //console.log(todolist);
+        //检查是所有的复选框是否选中
+
+        all.checked = todolist.every((item) => item.status);
+        //统计未完成
+        let tmp = todolist.filter((item) => {
+          return item.status == false;
+        });
+        console.log(tmp.length);
+        if (todolist.length === 0) {
+          num.innerHTML = "0";
+        }
+        num.innerHTML = tmp.length;
+        todolist;
+      }
+      //获取数组
+      function getLocalData(key) {
+        let data = localStorage.getItem(key);
+        if (data) {
+          return JSON.parse(data);
+        } else {
+          return [];
+        }
+      }
+      console.log(getLocalData("todolist"));
+    </script>
+  </body>
+</html>
